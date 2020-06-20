@@ -6,6 +6,13 @@ CPU := atmega328p
 F_CPU := 16000000
 PROGRAMMER ?= arduino
 
+ifdef TUNE_CLOCK
+    # Unset bit 7 to output clock to PB0
+    FUSE_LOW := 0x22
+else
+    FUSE_LOW := 0x62
+endif
+
 CFLAGS=-Os -std=c99 -DF_CPU=$(F_CPU) -mmcu=$(CPU)
 
 SRC := $(wildcard *.c)
@@ -42,9 +49,9 @@ fuse:
 	    exit 1; \
 	fi
 	if [ -z "$(DEV)" ]; then \
-	    $(AVRDUDE) -c $(PROGRAMMER) -p $(CPU) -U lfuse:w:0x62:m -B250;
+	    $(AVRDUDE) -c $(PROGRAMMER) -p $(CPU) -U lfuse:w:$(FUSE_LOW):m -B250; \
 	else \
-	    $(AVRDUDE) -c $(PROGRAMMER) -p $(CPU) -P $(DEV) -U lfuse:w:0x62:m -B250; \
+	    $(AVRDUDE) -c $(PROGRAMMER) -p $(CPU) -P $(DEV) -U lfuse:w:$(FUSE_LOW):m -B250; \
 	fi
 
 clean:
