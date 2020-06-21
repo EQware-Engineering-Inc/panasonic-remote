@@ -3,30 +3,12 @@
 
 #include <stdint.h>
 
-//// Panasonic Power
-////0000 0070 0000 0064
-////0080 003e
-//0100 0000 0000 0100 0000 1001 0000 0000 1011 1100 1011 0101
-//0x02      0x20      0x90      0x00      0x3D      (XOR of last three bytes)
-//
-////0010 0aa3
-////0080 003e
-//0100 0000 0000 0100 0000 1001 0000 0000 1011 1100 1011 0101
-////0010 09d1
-
-// CARRIER_COUNTER is how many ticks of TIMER2
+// CARRIER_COUNTER is how many ticks of TIMER2 for the width of each IR pulse
+// (ie half the carrier frequency period)
 #define CARRIER_COUNTER (0x1A)
 
-#define ENABLE_CARRIER() do { \
-    /* Enable TIMER1_COMPA_vect */ \
-    TIMSK1 |= _BV(OCIE1A); \
-} while (0)
-#define DISABLE_CARRIER() do { \
-    /* Disable TIMER1_COMPA_vect so that when the carrier does not get
-     * restarted */ \
-    TIMSK1 |= _BV(OCIE1A); \
-} while (0)
 #define START_CARRIER() do { \
+    TCNT2 = 0x0000; \
     /* Clear OC2B (PD3) on compare match. Set it at counter bottom. */ \
     TCCR2A |= _BV(COM2B1); \
 } while (0)
@@ -55,12 +37,13 @@ enum button {
     POWER = 0x3D,
 };
 
-uint8_t code[CODE_LEN];
-uint8_t * code_byte = code;
-uint8_t code_bit;
+volatile uint8_t code[CODE_LEN];
+volatile uint8_t * code_byte = code;
+volatile uint8_t code_bit;
 
-void start_code(enum button button_code) {
-    // Information from jonsfine at
+void start_code(enum button button_code)
+{
+    // Code information from jonsfine at
     // http://www.remotecentral.com/cgi-bin/mboard/rc-pronto/thread.cgi?26152
 
     // Panasonic's Kaseikyo IR standard identifier
@@ -77,9 +60,17 @@ void start_code(enum button button_code) {
     code_byte = code;
     code_bit = 8;
 
-    BURST_LEAD_IN();
-    ENABLE_CARRIER();
+    cli(); // Let's not have anything funny happen
+
+    BURST_LEAD_IN(); // We start with the lead-in burst
     START_CARRIER();
+    TCNT1 = 0x0000; // Start the countdown
+
+    //Enable TIMER1_COMPA_vect. This is what advances through the bits in the
+    //code.
+    TIMSK1 |= _BV(OCIE1A);
+
+    sei();
 }
 
 ISR (TIMER1_COMPB_vect)
@@ -167,8 +158,12 @@ int main() {
 
     TCCR1B |= _BV(CS10); // No clock prescaling
 
-    // Output Compare A Match & B Match Interrupt Enable
-    TIMSK1 |= _BV(OCIE1A) | _BV(OCIE1B);
+    // Output Compare B Match Interrupt Enable
+    // We will enable the A Match Interrupt Enable later. We don't want to do
+    // it now because we don't have anything loaded in the code array and have
+    // nothing to send.
+    // Enabling B Match now is harmless as it only disables the carrier signal.
+    TIMSK1 |= _BV(OCIE1B);
 
     start_code(POWER);
 
