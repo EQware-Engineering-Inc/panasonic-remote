@@ -1,0 +1,9 @@
+*.o
+*.d
+*~
+.*.sw*
+.ccls*
+compile_commands.json
+*.elf
+*.hex
+TRASH*
