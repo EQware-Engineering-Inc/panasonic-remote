@@ -34,7 +34,25 @@
 #define CODE_LEN (6) // Panasonic uses a 6 byte code
 
 enum button {
-    POWER = 0x3D,
+ POWER = 0x3D,
+ EJECT = 0x01,
+ STOP = 0x00,
+ PLAY = 0x0A,
+ PAUSE = 0x06,
+ VSS = 0x9E,
+ FF = 0x03,
+ RW = 0x02,
+ FORWARD = 0x4A,
+ BACKWARD = 0x49,
+ MENU = 0x80,
+ UP = 0x85,
+ DOWN = 0x86,
+ LEFT = 0x87,
+ RIGHT = 0x88,
+ ENTER = 0x82,
+ SUBTITLE = 0x91,
+ ACTION = 0x56,
+ TITLE = 0x9B,
 };
 
 volatile uint8_t code[CODE_LEN];
