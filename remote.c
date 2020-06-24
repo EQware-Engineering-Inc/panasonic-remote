@@ -1,6 +1,13 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+/*    Pin    | Func  | Usage
+ * ----------+-------+---------------------------------------------------------
+ *   1 (PC6) | RESET | Use a pullup to prevent reset
+ *   5 (PD3) | OC2B  | Output to activate IR LED
+ *  14 (PB0) | CLKO  | Normally disabled unless compiled with TUNE_CLOCK
+ */
+
 #include <stdint.h>
 
 // CARRIER_COUNTER is how many ticks of TIMER2 for the width of each IR pulse
@@ -142,6 +149,11 @@ timer1_compa_done:
 }
 
 int main() {
+
+#ifdef TUNE_CLOCK
+    // Just do nothing. We are tuning the clock
+    for (;;) ;
+#endif
 
     cli();
 

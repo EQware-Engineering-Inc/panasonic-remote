@@ -9,6 +9,7 @@ PROGRAMMER ?= arduino
 ifdef TUNE_CLOCK
     # Unset bit 7 to output clock to PB0
     FUSE_LOW := 0x22
+    CFLAGS += -DTUNE_CLOCK
 else
     FUSE_LOW := 0x62
 endif
