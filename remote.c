@@ -145,6 +145,9 @@ int main() {
 
     cli();
 
+    // Disable the ADC
+    ADCSRA = 0;
+
     // Set PD0 and PD3 as outputs
     // PD3 will be the carrier
     // PD0 will be toggled when carrier signal is toggled
