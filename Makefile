@@ -3,8 +3,9 @@ AVRDUDE := avrdude
 OBJCOPY := avr-objcopy
 
 CPU := atmega328p
-F_CPU := 16000000
-PROGRAMMER ?= arduino
+F_CPU := 1000000
+PROGRAMMER ?= usbasp
+BITCLOCK ?= -B256kHz
 
 ifdef TUNE_CLOCK
     # Unset bit 7 to output clock to PB0
@@ -14,7 +15,7 @@ else
     FUSE_LOW := 0x62
 endif
 
-CFLAGS=-Os -std=c99 -DF_CPU=$(F_CPU) -mmcu=$(CPU)
+CFLAGS += -Os -std=c99 -DF_CPU=$(F_CPU) -mmcu=$(CPU) -g
 
 SRC := $(wildcard *.c)
 OBJ := $(SRC:.c=.o)
@@ -39,9 +40,9 @@ flash: $(HEX_TARGET)
 	    exit 1; \
 	fi
 	if [ -z "$(DEV)" ]; then \
-	    $(AVRDUDE) -c $(PROGRAMMER) -p $(CPU) -U flash:w:$(HEX_TARGET) -B250; \
+	    $(AVRDUDE) -c $(PROGRAMMER) -p $(CPU) -U flash:w:$(HEX_TARGET) $(BITCLOCK); \
 	else \
-	    $(AVRDUDE) -c $(PROGRAMMER) -p $(CPU) -P $(DEV) -U flash:w:$(HEX_TARGET) -B250; \
+	    $(AVRDUDE) -c $(PROGRAMMER) -p $(CPU) -P $(DEV) -U flash:w:$(HEX_TARGET) $(BITCLOCK); \
 	fi
 
 fuse:
@@ -50,9 +51,9 @@ fuse:
 	    exit 1; \
 	fi
 	if [ -z "$(DEV)" ]; then \
-	    $(AVRDUDE) -c $(PROGRAMMER) -p $(CPU) -U lfuse:w:$(FUSE_LOW):m -B250; \
+	    $(AVRDUDE) -c $(PROGRAMMER) -p $(CPU) -U lfuse:w:$(FUSE_LOW):m $(BITCLOCK); \
 	else \
-	    $(AVRDUDE) -c $(PROGRAMMER) -p $(CPU) -P $(DEV) -U lfuse:w:$(FUSE_LOW):m -B250; \
+	    $(AVRDUDE) -c $(PROGRAMMER) -p $(CPU) -P $(DEV) -U lfuse:w:$(FUSE_LOW):m $(BITCLOCK); \
 	fi
 
 clean:
