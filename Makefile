@@ -17,6 +17,15 @@ endif
 
 CFLAGS += -Os -std=c99 -DF_CPU=$(F_CPU) -mmcu=$(CPU) -g
 
+# Test if the compiler supports -MM and -MF for automatic header dependency tracking
+ifeq ($(shell $(CC) -MM -MF /dev/null /dev/null >/dev/null 2>&1 || echo y), y)
+    USE_MM := false
+    $(warning -MM & -MF flags are not supported by $(CC). \
+              Header dependency will not be tracked.)
+else
+    USE_MM := true
+endif
+
 SRC := $(wildcard *.c)
 OBJ := $(SRC:.c=.o)
 
@@ -32,6 +41,7 @@ $(ELF_TARGET): $(OBJ)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $+
 
 %.o: %.c
+	if $(USE_MM); then $(CC) $(CFLAGS) -MM -MF .$<.d $<; fi
 	$(CC) $(CFLAGS) $< -c -o $@
 
 flash: $(HEX_TARGET)
@@ -59,4 +69,9 @@ fuse:
 clean:
 	rm -rf $(OBJ) $(TARGET) $(TARGET_ELF) $(TARGET_HEX)
 
-.PHONY: all flash clean
+# Include these last, so they don't affect the default target
+ifeq ($(USE_MM), true)
+  -include $(wildcard .*.d)
+endif
+
+.PHONY: all flash fuse clean
